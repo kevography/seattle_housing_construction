@@ -2,15 +2,21 @@
 <html lang="en-US">
 <head>
   <meta charset="utf-8">
-  <title>Seattle Development Map</title>
+  <title>Seattle Housing</title>
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="map"></div>
-
+  <div id="sidebar">
+    <h1>Single Family Home Sales</h1>
+    <div class="section">
+      <h2>Year: <label id="active-year">2015</label></h2>
+      <input autocomplete="off" id="year_slider" class="row" type="range" min="1900" max="2015" value="2015" step="1"/>
+    </div>
+  </div>
 
 
 
@@ -22,7 +28,7 @@
     const map = new mapboxgl.Map({
       container: 'map', // container ID
       // CHANGE TO CUSTOM
-      style: 'mapbox://styles/kevography/ckwuaxfee4rn416p5i4ikmkmd', // style URL
+      style: 'mapbox://styles/mapbox/dark-v10', // style URL
       zoom: 10.5, // starting zoom
       center: [-122.32, 47.614] // starting center
     });
@@ -34,16 +40,44 @@
       seattle_housing_points = await response.json();
 
       map.on('load', () => {
-        let filterYear =['==', ['number', ['get', 'YR_BUILT']], 2015];
+        let filterYear = ['==', ['number', ['get', 'YEAR']], 2015];
 
         map.addLayer({
-          'id': 'sfh_sales',
+          'id': 'sea_housing',
           'type': 'circle',
           'source': {
             type: 'geojson',
             data: seattle_housing_points
-          }
+          },
+          'paint': {
+            'circle-color': ['match', ['string',['get','LAND_USE_DESC_10']],
+              'Single Family', '#0031E7',
+              'Multi-Family', '#F70000',
+              'Commercial/Mixed-Use', '#00F700',
+              '#e3e3e3'
+            ],
+            'circle-radius': {
+              'base': 1.5,
+              'stops': [
+                [10.5, 1.5],
+                [18, 8]
+              ]
+            },
+            'circle-opacity':1
+          },
+          'filter': ['all', filterYear]
         });
+        //update year filter when slider is dragged
+        document.getElementById('year_slider').addEventListener('input', (event)=> {
+          const year = parseInt(event.target.value);
+
+          //update all layers
+          filterYear = ['==', ['number', ['get', 'YEAR']], year];
+          map.setFilter('sea_housing', ['all', filterYear]);
+
+          //update active year in sidebar
+          document.getElementById('active-year').innerText = year;
+        });// end of slider functionality
 
       });
     }
