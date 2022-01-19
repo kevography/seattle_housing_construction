@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <title>Seattle Development Map</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
+</head>
+<body>
+  <div id="map"></div>
+
+
+
+
+  <!--SCRIPT START-->
+  <script>
+    mapboxgl.accessToken =
+      'pk.eyJ1Ijoia2V2b2dyYXBoeSIsImEiOiJja3dhNWo2YjUyZ2V6MnFtbndndHhsYzF5In0.r9-h3pU6NGSjtbmv0ADErg';
+
+    const map = new mapboxgl.Map({
+      container: 'map', // container ID
+      // CHANGE TO CUSTOM
+      style: 'mapbox://styles/kevography/ckwuaxfee4rn416p5i4ikmkmd', // style URL
+      zoom: 10.5, // starting zoom
+      center: [-122.32, 47.614] // starting center
+    });
+
+
+    async function geojsonFetch() {
+      let response, seattle_housing_points;
+      response = await fetch('assets/seattle_residential_points.geojson');
+      seattle_housing_points = await response.json();
+
+      map.on('load', () => {
+        let filterYear =['==', ['number', ['get', 'YR_BUILT']], 2015];
+
+        map.addLayer({
+          'id': 'sfh_sales',
+          'type': 'circle',
+          'source': {
+            type: 'geojson',
+            data: seattle_housing_points
+          }
+        });
+
+      });
+    }
+    geojsonFetch();
+  </script>
+</body>
+</html>
